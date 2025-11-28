@@ -145,6 +145,11 @@ const MainScreen = ({ route, navigation }) => {
           navigation.replace("Login"); // Rediriger vers la page de connexion après déconnexion
         }}
       />
+        <Button
+  title="Scanner une facture"
+  onPress={() => navigation.navigate("Scan")}
+/>
+
     </View>
   );
 };
