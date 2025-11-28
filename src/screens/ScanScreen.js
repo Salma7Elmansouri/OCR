@@ -40,7 +40,7 @@ export default function ScanScreen({ navigation }) {
       <CameraView
         style={styles.camera}
         ref={setCameraRef}
-        flash="on"
+        flash="off"
       />
     </View>
   );

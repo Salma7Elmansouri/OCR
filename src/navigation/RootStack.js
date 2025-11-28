@@ -5,6 +5,7 @@ import SignUpScreen from "../screens/SignUpScreen";
 import MainScreen from "../screens/MainScreen";
 import ScanScreen from "../screens/ScanScreen";
 import OcrScreen from "../screens/OcrScreen";
+import InvoicePreviewScreen from "../screens/InvoicePreviewScreen";
 
 
 const Stack = createNativeStackNavigator();
@@ -17,6 +18,7 @@ export function RootStack() {
             <Stack.Screen name="Main" component={MainScreen}/>
             <Stack.Screen name="Scan" component={ScanScreen}/>
             <Stack.Screen name="Ocr" component={OcrScreen}/>
+            <Stack.Screen name="InvoicePreviewScreen" component={InvoicePreviewScreen} />
         </Stack.Navigator>
     );
 }
