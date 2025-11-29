@@ -16,7 +16,7 @@ const MainScreen = ({ route, navigation }) => {
 
   const pingOdooApi = async () => {
     try {
-      const response = await fetch("http://192.168.1.21:8069/api/ping", {
+      const response = await fetch("http://192.168.1.210:8069/api/ping", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -47,7 +47,7 @@ const MainScreen = ({ route, navigation }) => {
     };
 
     try {
-      const response = await fetch("http://192.168.1.21:8069/api/invoice/create", {
+      const response = await fetch("http://192.168.1.210:8069/api/invoice/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -77,7 +77,7 @@ const MainScreen = ({ route, navigation }) => {
     };
 
     try {
-      const response = await fetch("http://192.168.1.21:8069/api/so/create", {
+      const response = await fetch("http://192.168.1.210:8069/api/so/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -107,7 +107,7 @@ const MainScreen = ({ route, navigation }) => {
     };
 
     try {
-      const response = await fetch("http://192.168.1.21:8069/api/po/create", {
+      const response = await fetch("http://192.168.1.210:8069/api/po/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -147,7 +147,7 @@ const MainScreen = ({ route, navigation }) => {
       />
         <Button
   title="Scanner une facture"
-  onPress={() => navigation.navigate("Scan")}
+  onPress={() => navigation.navigate("Ocr")}
 />
 
     </View>

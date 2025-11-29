@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "odoo-ocr-479614",
+  "private_key_id": "d4824df538c9b60b8e1cc8654833b35b9cf4ca2b",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDQdaV0fCvAtRd4\n5QKCwRDJhbu3YaEcZlc3C5YkE6whDYqU1Vl2xywVgAGDyMMHjgYfh9he7tEVYjvj\nC+ybpd9zfoYmNO6jyoRqzsnyx+fr4g/k/J/5jK2Oy5iGwdbOLps1N1Brnkm/+8rR\nz4nvsfHGjLVFf7m5qtE92rOu29ARtEyf7jhUb2WxrXxbUwpJ4iLlNPeHe3bIYhGH\nFaeAh8iEMNPbotFH7V75oLJ2ng8kPTKgM7kKXo2Sb/3Ayd2WMw3yG6ui149YYZQ5\nc6RCQBI1tttSAZgYhhOO65nC8neZaTBWPV7t4E0RRF1zeUP5G6RRs+sfs14QG2v3\nRfOHaKk5AgMBAAECggEADohBEFGOuEi3me83IVflvHLE/xgAhAsTZew6G4o+i/BW\neqEz8y6X4WjS0jXW+MobHawZ9qZF76xxOdcNN92UqgfGQNgcUdFOsWZ4mCL9BUn1\nazR8T4iR2dxSJgTR3X5MxiU0x0fZ4tciEMXb2xin3vxUr8NjdnDU1O/P6m76/pzX\nqbC+ckSeGk4oW53UDjZi2XUm8ZsYBvGOCpK6ruqZgVavVnIi3dQROISBhRqSn80m\ncYgCyYTdJRojno1eVWKxnOPQHFlVXz2j6EMFu8yRq39x2zkdBkUx7so64fcJC+Qs\nIK93mWDRQLuvrt6Vz6DyA8LEGkJTY+KTJt4VHXd1gQKBgQDssqMGIB9fDlrFQRFV\n7Y3YyA83t1h/gU1I+vJKSRl8jWwpQD6BWSG+3aWg3/It0nyaZSakgOY1anW2pN5G\n3QgJdY+YWHx2wlfm1abBgqnEm4FHYR45C+RXYQnUphmezcQVULQBtfcuVWO/TiyR\nwv370zPfM34Vq6TDBIqZrnodwQKBgQDhdYAyDLGdRcaU/cDnRzjfOdml8H5R7DSR\noMj7mWNuRgQZh9oTZCyEd2K2nPS1xl6JmI714qbia0kBaFJcACySkSvhhjO4eLtg\ni9qO2Wa7paldKNMbns8jaBOvgEgrYMOZsRqSP4WSBMP5xTAxffMX3KI0zBdhgufC\nmbXnGnjZeQKBgCR+BhRTr4KAPA5dUcblsRDTB0WXxtUhokC2L9S0IHHLe/mAJiLb\nExDSK076N+RIp11GawbBuLxThYJ7OKnEOhD7RwA95DKLE/JKzkLXWkUtlGjk2DwD\nUVkHZPScBycsoiaHIrmAzHMgRxiffM+cOHwyu7SVw8Kji+tlL9kxxTIBAoGBAIju\n0JmVVBrtUhsTs6HEhCov/JzoYBBpodQBD5CgLN/A7qSC+lRktxUNXYsD8Syl+q0f\nV1TIAAvslT6hmcP+5xNt0HT9CVS1HzkYN/oi2F6H00GdlfpkjfI3OB2TkEGoV6R1\nCGpi4kE5W73LoeWtVYPcoTfn7RtwYkqzCOQAE/4hAoGBAN1JMnFr+pr6GYfMKDNT\nUh+dILIYW0Ti1JLUvaVVSso8G6fvWt8DL9KnNgiRKyAgPAB6qrB7PmksPP8yei2i\nxZUqSB5a5J9w/rodapd8KQR1mF3yxAde6/up0YgtLsc9awTP9cFr0WlCkl9SJUYi\nT1H57P0nY7ubXNvVSYX3v6jf\n-----END PRIVATE KEY-----\n",
+  "client_email": "odoo-ocr@odoo-ocr-479614.iam.gserviceaccount.com",
+  "client_id": "108759114867250666087",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/odoo-ocr%40odoo-ocr-479614.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
