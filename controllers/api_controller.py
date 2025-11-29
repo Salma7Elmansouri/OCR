@@ -4,9 +4,10 @@ import json
 from datetime import date
 import os
 from openai import OpenAI  # Hugging Face compatible via OpenAI API
+from .config_secret import HUGGINGFACE_API_KEY
 
 # --- Token Hugging Face via variable d'environnement ---
-HF_TOKEN = os.environ.get("HF_TOKEN", "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")  # Ton token ici si variable pas définie
+HF_TOKEN = os.environ.get("HF_TOKEN", HUGGINGFACE_API_KEY)
 
 # Initialise le client Hugging Face
 client = OpenAI(
