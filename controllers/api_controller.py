@@ -27,49 +27,56 @@ def _json_response(success=True, message="", data=None, status=200):
         headers=[("Content-Type", "application/json")],
         status=status,
     )
+
+
 def clean_number(value):
+    """Nettoie une chaîne de type '1 200,50 DH' -> float."""
     if not value:
         return 0.0
-    # Convertir en string
     value = str(value)
 
-    # Retirer tout sauf chiffres, virgules, points
-    value = ''.join(c for c in value if c.isdigit() or c in [',', '.'])
+    # Retirer tout sauf chiffres, virgules, points et signe -
+    value = ''.join(c for c in value if c.isdigit() or c in [',', '.', '-'])
 
-    # Si format européen (ex : "1.234,56")
-    if value.count(',') == 1 and value.count('.') > 1:
-        value = value.replace('.', '').replace(',', '.')
+    if not value:
+        return 0.0
 
-    # Si format "200,50"
-    elif value.count(',') == 1 and value.count('.') == 0:
+    # Si format européen avec virgule décimale
+    if value.count(',') == 1 and value.count('.') == 0:
         value = value.replace(',', '.')
+
+    # Si format "1.234,56"
+    if value.count(',') == 1 and value.count('.') > 0:
+        value = value.replace('.', '').replace(',', '.')
 
     try:
         return float(value)
-    except:
+    except Exception:
         return 0.0
 
+
 def parse_date(value):
+    """Accepte 11/28/2025, 28/11/2025, 2025-11-28, 28-11-2025, etc., et renvoie YYYY-MM-DD."""
     if not value:
-        return None
+        return str(date.today())
 
-    value = value.strip().replace('.', '/').replace('-', '/')
+    value = str(value).strip().replace('.', '/').replace('-', '/')
 
-    # Liste de formats possibles
     formats = [
         "%Y/%m/%d",  # 2025/11/28
         "%d/%m/%Y",  # 28/11/2025
-        "%m/%d/%Y",  # 11/28/2025 (TON FORMAT ACTUEL)
+        "%m/%d/%Y",  # 11/28/2025
     ]
 
     for fmt in formats:
         try:
             return datetime.strptime(value, fmt).strftime("%Y-%m-%d")
-        except:
+        except Exception:
             continue
 
-    # Si rien ne marche : renvoyer une date par défaut
     return str(date.today())
+
+
 # --- Controller principal ---
 class OcrApiController(http.Controller):
 
@@ -78,43 +85,77 @@ class OcrApiController(http.Controller):
     def ping(self):
         return {"success": True, "message": "API OK"}
 
-
     @http.route("/api/ocr/ai_extract", type="http", auth="public", methods=["POST"], csrf=False)
     def ai_extract(self, **kwargs):
         try:
-            # Lire le corps brut de la requête
-            text = request.httprequest.data.decode("utf-8").strip()
+            raw_body = request.httprequest.data.decode("utf-8").strip()
+
+            # Essayer de lire un JSON {"text": "..."}
+            text = ""
+            try:
+                payload = json.loads(raw_body)
+                text = payload.get("text", "").strip()
+            except ValueError:
+                text = raw_body
+
             if not text:
                 return self._json_response(False, "Aucun texte fourni", status=400)
 
-            # Prompt pour forcer le modèle à renvoyer du JSON
+            # Prompt: structure de facture complète
             prompt = f"""
-            Analyse ce texte de facture et retourne strictement en JSON avec les champs suivants :
-            - Fournisseur
-            - Client
-            - Numéro de la facture
-            - Date de la facture
-            - Date d'échéance
-            - Total hors taxes
-            - TVA
-            - Exonéré de TVA
-            - Total TTC
-            - Référence
-            Ne rien ajouter d'autre. Texte : \"\"\"{text}\"\"\" 
-            """
+Tu es un extracteur de données de factures. À partir du texte brut suivant, produis STRICTEMENT un JSON valide respectant exactement cette structure (clés et types) :
 
-            # Appel Hugging Face ou un modèle d'IA similaire
+{{
+  "invoice_number": "",
+  "invoice_date": "",
+  "due_date": "",
+  "supplier": {{
+    "name": "",
+    "street": "",
+    "city": "",
+    "country": ""
+  }},
+  "client": {{
+    "name": "",
+    "street": "",
+    "city": "",
+    "country": ""
+  }},
+  "lines": [
+    {{
+      "name": "",
+      "description": "",
+      "quantity": "",
+      "unit_price": "",
+      "tax_rate": ""
+    }}
+  ],
+  "totals": {{
+    "untaxed": "",
+    "tva": "",
+    "total": ""
+  }},
+  "payment_terms": "",
+  "reference": ""
+}}
+
+Règles :
+- Si une information est introuvable, laisse une chaîne vide "".
+- Les montants et quantités restent sous forme de chaînes (ex: "100", "100.50", "100 DH").
+- Ne renvoie QUE le JSON, sans texte avant ou après.
+
+Texte de la facture :
+\"\"\"{text}\"\"\"
+"""
+
             completion = client.chat.completions.create(
-                model="moonshotai/Kimi-K2-Instruct-0905",  # Assurez-vous que le modèle est correct
+                model="moonshotai/Kimi-K2-Instruct-0905",
                 messages=[{"role": "user", "content": prompt}],
             )
 
             choice = completion.choices[0]
+            result_text = getattr(choice, "message", None).content if getattr(choice, "message", None) else getattr(choice, "text", "")
 
-            # Accéder correctement au texte
-            result_text = choice.message.content if hasattr(choice, "message") and choice.message else getattr(choice, "text", "")
-
-            # Essayer de parser en JSON mais fallback si impossible
             try:
                 invoice_data = json.loads(result_text)
             except json.JSONDecodeError:
@@ -145,57 +186,89 @@ class OcrApiController(http.Controller):
             raw_data = request.httprequest.data.decode("utf-8")
             data = json.loads(raw_data)
 
-            # Récupération des champs
-            supplier = data.get("supplier")
-            client = data.get("client")
+            # Meta
+            supplier_name = data.get("supplier")
+            client_name = data.get("client")
             invoice_number = data.get("invoice_number")
             invoice_date = parse_date(data.get("invoice_date"))
-            due_date = parse_date(data.get("due_date"))
-            total_without_tax = clean_number(data.get("total_without_tax"))
-            tva = clean_number(data.get("tva"))
-            total_ttc = clean_number(data.get("total_ttc"))
+            due_date = parse_date(data.get("due_date")) if data.get("due_date") else None
             reference = data.get("reference")
+            payment_terms = data.get("payment_terms")
+
+            # Lignes
+            lines = data.get("lines") or []
+
+            # Totaux (optionnels)
+            totals = data.get("totals") or {}
+            total_without_tax = clean_number(
+                totals.get("untaxed") or data.get("total_without_tax")
+            )
+            tva_total = clean_number(totals.get("tva") or data.get("tva"))
+            total_ttc = clean_number(totals.get("total") or data.get("total_ttc"))
 
             # Vérification minimale
-            if not client or not invoice_number:
+            if not client_name or not invoice_number:
                 return self._json_response(False, "Client et numéro de facture requis", status=400)
 
             # Recherche partenaire client
             partner_client = request.env["res.partner"].sudo().search(
-                [("name", "ilike", client)], limit=1
+                [("name", "ilike", client_name)], limit=1
             )
             if not partner_client:
-                return self._json_response(False, f"Client '{client}' non trouvé", status=400)
+                return self._json_response(False, f"Client '{client_name}' non trouvé", status=400)
 
-            # Recherche partenaire fournisseur (OPTIONNEL)
+            # Recherche partenaire fournisseur (optionnel)
             partner_supplier = None
-            if supplier:
+            if supplier_name:
                 partner_supplier = request.env["res.partner"].sudo().search(
-                    [("name", "ilike", supplier)], limit=1
+                    [("name", "ilike", supplier_name)], limit=1
                 )
 
-            # Création de la facture
+            invoice_line_ids = []
+
+            # Si on a des lignes détaillées : on les utilise
+            if lines:
+                for line in lines:
+                    name = line.get("name") or line.get("description") or f"Facture {invoice_number}"
+                    qty = clean_number(line.get("quantity") or 1)
+                    unit_price = clean_number(line.get("unit_price") or line.get("unitPrice") or 0)
+                    tax_rate = clean_number(line.get("tax_rate") or line.get("taxRate") or 0)
+
+                    line_vals = {
+                        "name": name,
+                        "quantity": qty if qty > 0 else 1.0,
+                        "price_unit": unit_price,
+                    }
+
+                    if tax_rate > 0:
+                        tax = request.env["account.tax"].sudo().search(
+                            [("amount", "=", tax_rate)], limit=1
+                        )
+                        if tax:
+                            line_vals["tax_ids"] = [(6, 0, [tax.id])]
+
+                    invoice_line_ids.append((0, 0, line_vals))
+
+            # Sinon : fallback sur une seule ligne avec total hors taxe
+            if not invoice_line_ids:
+                line_vals = {
+                    "name": f"Facture {invoice_number}",
+                    "quantity": 1,
+                    "price_unit": total_without_tax,
+                }
+                invoice_line_ids.append((0, 0, line_vals))
+
             move_vals = {
+                "name": invoice_number,
                 "move_type": "out_invoice",
                 "partner_id": partner_client.id,
                 "invoice_date": invoice_date,
                 "ref": reference,
-                "invoice_line_ids": [
-                    (0, 0, {
-                        "name": f"Facture {invoice_number}",
-                        "quantity": 1,
-                        "price_unit": total_without_tax,
-                    })
-                ],
+                "invoice_line_ids": invoice_line_ids,
             }
 
-            # Ajout TVA
-            if tva > 0:
-                tax = request.env["account.tax"].sudo().search(
-                    [("amount", "=", tva)], limit=1
-                )
-                if tax:
-                    move_vals["invoice_line_ids"][0][2]["tax_ids"] = [(6, 0, [tax.id])]
+            if due_date:
+                move_vals["invoice_date_due"] = due_date
 
             # Création dans Odoo
             move = request.env["account.move"].sudo().create(move_vals)
