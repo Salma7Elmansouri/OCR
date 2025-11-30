@@ -1,181 +1,152 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Button } from "react-native";
+import React from "react";
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    Image,
+} from "react-native";
 
-const MainScreen = ({ route, navigation }) => {
-  const [odooResponse, setOdooResponse] = useState(null);
+const PRIMARY = "#6200EE";
+const BG = "#F5F5F5";
+const CARD = "#FFFFFF";
+const TEXT = "#1A1A1A";
+const SUB = "#6A6A6A";
 
-  const { odooResponse: initialResponse } = route.params || {};
-
-  useEffect(() => {
-    if (initialResponse) {
-      setOdooResponse(initialResponse);
-    } else {
-      pingOdooApi(); // Tester l'API "ping" si aucune réponse initiale
-    }
-  }, []);
-
-  const pingOdooApi = async () => {
-    try {
-      const response = await fetch("http://192.168.1.210:8069/api/ping", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await response.json();
-      console.log("Ping Response: ", data);
-      setOdooResponse(data); // Sauvegarder la réponse dans l'état
-    } catch (error) {
-      console.error("Error pinging Odoo API:", error);
-    }
-  };
-
-  const createInvoice = async () => {
-    const invoiceData = {
-      partner_id: 3, // ID du partenaire dans Odoo
-      move_type: "out_invoice",
-      invoice_date: "2025-11-24",
-      lines: [
-        {
-          name: "Produit A",
-          quantity: 2,
-          price_unit: 100,
-          account_id: 1,
-          tax_ids: [1, 2],
-        },
-      ],
+export default function MainSelector({ navigation }) {
+    const handleSelect = (type) => {
+        if (type === "invoice") {
+            navigation.navigate("Ocr", {
+                mode: "invoice",
+            });
+        } else if (type === "po") {
+            navigation.navigate("Ocr", {
+                mode: "po",
+            });
+        } else if (type === "so") {
+            navigation.navigate("Ocr", {
+                mode: "so",
+            });
+        }
     };
 
-    try {
-      const response = await fetch("http://192.168.1.210:8069/api/invoice/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(invoiceData),
-      });
-      const data = await response.json();
-      console.log("Invoice Creation Response: ", data);
-      setOdooResponse(data); // Mettre à jour la réponse affichée
-    } catch (error) {
-      console.error("Error creating invoice:", error);
-    }
-  };
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>Sélection du document</Text>
+            <Text style={styles.subtitle}>
+                Choisissez le type de document que vous souhaitez scanner ou créer.
+            </Text>
 
-  const createSaleOrder = async () => {
-    const saleOrderData = {
-      partner_id: 3,
-      date_order: "2025-11-24",
-      lines: [
-        {
-          product_id: 1,
-          quantity: 2,
-          price_unit: 100,
-          name: "Produit A",
-        },
-      ],
-    };
+            <View style={styles.grid}>
+                {/* FACTURE */}
+                <TouchableOpacity
+                    style={styles.card}
+                    onPress={() => handleSelect("invoice")}
+                >
 
-    try {
-      const response = await fetch("http://192.168.1.210:8069/api/so/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(saleOrderData),
-      });
-      const data = await response.json();
-      console.log("Sale Order Creation Response: ", data);
-      setOdooResponse(data); // Mettre à jour la réponse affichée
-    } catch (error) {
-      console.error("Error creating sale order:", error);
-    }
-  };
+                    <Text style={styles.cardTitle}>Facture</Text>
+                    <Text style={styles.cardText}>
+                        Scanner et générer une facture automatiquement.
+                    </Text>
+                </TouchableOpacity>
 
-  const createPurchaseOrder = async () => {
-    const purchaseOrderData = {
-      partner_id: 5,
-      date_order: "2025-11-24",
-      lines: [
-        {
-          product_id: 2,
-          quantity: 5,
-          price_unit: 50,
-          name: "Produit achat",
-        },
-      ],
-    };
+                {/* PURCHASE ORDER */}
+                <TouchableOpacity
+                    style={styles.card}
+                    onPress={() => handleSelect("po")}
+                >
 
-    try {
-      const response = await fetch("http://192.168.1.210:8069/api/po/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(purchaseOrderData),
-      });
-      const data = await response.json();
-      console.log("Purchase Order Creation Response: ", data);
-      setOdooResponse(data); // Mettre à jour la réponse affichée
-    } catch (error) {
-      console.error("Error creating purchase order:", error);
-    }
-  };
+                    <Text style={styles.cardTitle}>Bon d'achat (PO)</Text>
+                    <Text style={styles.cardText}>
+                        Scanner et créer un Purchase Order.
+                    </Text>
+                </TouchableOpacity>
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.welcomeText}>Bienvenue sur la page principale !</Text>
+                {/* SALES ORDER */}
+                <TouchableOpacity
+                    style={styles.card}
+                    onPress={() => handleSelect("so")}
+                >
 
-      <Button
-        title="Créer une facture"
-        onPress={createInvoice}
-      />
-      <Button
-        title="Créer un ordre de vente"
-        onPress={createSaleOrder}
-      />
-      <Button
-        title="Créer un ordre d'achat"
-        onPress={createPurchaseOrder}
-      />
-      <Button
-        title="Déconnexion"
-        onPress={() => {
-          // FirebaseAuth.signOut(); (si vous avez Firebase intégré)
-          navigation.replace("Login"); // Rediriger vers la page de connexion après déconnexion
-        }}
-      />
-        <Button
-  title="Scanner une facture"
-  onPress={() => navigation.navigate("Ocr")}
-/>
+                    <Text style={styles.cardTitle}>Bon de vente (SO)</Text>
+                    <Text style={styles.cardText}>
+                        Scanner et créer un Sales Order.
+                    </Text>
+                </TouchableOpacity>
+            </View>
 
-    </View>
-  );
-};
+            <TouchableOpacity
+                style={styles.logoutBtn}
+                onPress={() => navigation.replace("Login")}
+            >
+                <Text style={styles.logoutTxt}>Déconnexion</Text>
+            </TouchableOpacity>
+        </View>
+    );
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fffbb78b",
-  },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  responseText: {
-    fontSize: 16,
-    color: "#333",
-    marginTop: 20,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    textAlign: "center",
-  },
+    container: {
+        flex: 1,
+        backgroundColor: BG,
+        padding: 20,
+    },
+    title: {
+        fontSize: 26,
+        fontWeight: "800",
+        color: TEXT,
+        marginTop: 20,
+    },
+    subtitle: {
+        fontSize: 14,
+        color: SUB,
+        marginBottom: 20,
+    },
+    grid: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        justifyContent: "space-between",
+    },
+    card: {
+        width: "48%",
+        backgroundColor: CARD,
+        padding: 15,
+        borderRadius: 14,
+        marginBottom: 20,
+        shadowColor: "#000",
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+        elevation: 4,
+        alignItems: "center",
+    },
+    icon: {
+        width: 60,
+        height: 60,
+        marginBottom: 10,
+        tintColor: PRIMARY,
+    },
+    cardTitle: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: TEXT,
+        marginBottom: 6,
+        textAlign: "center",
+    },
+    cardText: {
+        fontSize: 13,
+        color: SUB,
+        textAlign: "center",
+    },
+    logoutBtn: {
+        marginTop: 40,
+        backgroundColor: PRIMARY,
+        padding: 14,
+        borderRadius: 999,
+        alignItems: "center",
+    },
+    logoutTxt: {
+        color: "#FFF",
+        fontSize: 16,
+        fontWeight: "700",
+    },
 });
-
-export default MainScreen;
