@@ -52,7 +52,7 @@ export default function DocumentScanner() {
             if (!text) return Alert.alert("Erreur", "Impossible de lire le document");
 
             // --- ENVOI AU BACKEND POUR AI ---
-            const backendRes = await fetch("http://100.93.99.20:8069/api/ocr/ai_extract", {
+            const backendRes = await fetch("http://192.168.1.31:8069/api/ocr/ai_extract", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text }),

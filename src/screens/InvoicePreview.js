@@ -35,14 +35,15 @@ export default function InvoicePreview({ route, navigation }) {
 
     const createInvoiceInOdoo = async () => {
         try {
-            const res = await fetch("http://100.93.99.20:8069/api/invoice/create", {
+            const res = await fetch("http://192.168.1.31:8069/api/invoice/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    partner_id: invoiceData.client_id || 1, // Assurez-vous que `client_id` est bien défini
-                    invoice_date: invoiceData.date_facture,
-                    due_date: invoiceData.date_echeance, // Si vous avez la date d'échéance
+                    client: invoiceData.client,
                     supplier: invoiceData.fournisseur,
+                    invoice_number: invoiceData.numero_facture,
+                    invoice_date: invoiceData.date_facture,
+                    due_date: invoiceData.date_echeance,
                     total_without_tax: invoiceData.total_hors_taxes,
                     tva: invoiceData.tva,
                     total_ttc: invoiceData.total_ttc,
