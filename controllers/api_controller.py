@@ -1,7 +1,7 @@
 from odoo import http
 from odoo.http import request
 import json
-from datetime import date
+from datetime import date, datetime
 import os
 from openai import OpenAI  # Hugging Face compatible via OpenAI API
 from .config_secret import HUGGINGFACE_API_KEY
@@ -27,7 +27,49 @@ def _json_response(success=True, message="", data=None, status=200):
         headers=[("Content-Type", "application/json")],
         status=status,
     )
+def clean_number(value):
+    if not value:
+        return 0.0
+    # Convertir en string
+    value = str(value)
 
+    # Retirer tout sauf chiffres, virgules, points
+    value = ''.join(c for c in value if c.isdigit() or c in [',', '.'])
+
+    # Si format européen (ex : "1.234,56")
+    if value.count(',') == 1 and value.count('.') > 1:
+        value = value.replace('.', '').replace(',', '.')
+
+    # Si format "200,50"
+    elif value.count(',') == 1 and value.count('.') == 0:
+        value = value.replace(',', '.')
+
+    try:
+        return float(value)
+    except:
+        return 0.0
+
+def parse_date(value):
+    if not value:
+        return None
+
+    value = value.strip().replace('.', '/').replace('-', '/')
+
+    # Liste de formats possibles
+    formats = [
+        "%Y/%m/%d",  # 2025/11/28
+        "%d/%m/%Y",  # 28/11/2025
+        "%m/%d/%Y",  # 11/28/2025 (TON FORMAT ACTUEL)
+    ]
+
+    for fmt in formats:
+        try:
+            return datetime.strptime(value, fmt).strftime("%Y-%m-%d")
+        except:
+            continue
+
+    # Si rien ne marche : renvoyer une date par défaut
+    return str(date.today())
 # --- Controller principal ---
 class OcrApiController(http.Controller):
 
@@ -96,67 +138,82 @@ class OcrApiController(http.Controller):
         )
 
     # --- Création facture ---
-    @http.route("/api/invoice/create", type="json", auth="user", methods=["POST"], csrf=False)
+    @http.route("/api/invoice/create", type="http", auth="public", methods=["POST"], csrf=False)
     def create_invoice(self, **kwargs):
-        data = request.httprequest.get_json()
         try:
-            # Extraction des données de la requête (Les données retournées par l'API OCR)
-            supplier = data.get("Fournisseur")
-            client = data.get("Client")
-            invoice_number = data.get("Numéro de la facture")
-            invoice_date = data.get("Date de la facture") or str(date.today())  # Format de la date par défaut
-            due_date = data.get("Date d'échéance")
-            total_without_tax = data.get("Total hors taxes")
-            tva = data.get("TVA")
-            exempted_tva = data.get("Exonéré de TVA")
-            total_ttc = data.get("Total TTC")
-            reference = data.get("Référence")
+            # Lire le JSON brut envoyé par le frontend
+            raw_data = request.httprequest.data.decode("utf-8")
+            data = json.loads(raw_data)
 
-            # Validation des données extraites
-            if not supplier or not client or not invoice_number:
-                return self._json_response(False, "Fournisseur, Client et Numéro de la facture sont requis", status=400)
+            # Récupération des champs
+            supplier = data.get("supplier")
+            client = data.get("client")
+            invoice_number = data.get("invoice_number")
+            invoice_date = parse_date(data.get("invoice_date"))
+            due_date = parse_date(data.get("due_date"))
+            total_without_tax = clean_number(data.get("total_without_tax"))
+            tva = clean_number(data.get("tva"))
+            total_ttc = clean_number(data.get("total_ttc"))
+            reference = data.get("reference")
 
-            # Recherche du partenaire fournisseur et client dans Odoo
-            partner_supplier = request.env["res.partner"].sudo().search([("name", "ilike", supplier)], limit=1)
-            partner_client = request.env["res.partner"].sudo().search([("name", "ilike", client)], limit=1)
+            # Vérification minimale
+            if not client or not invoice_number:
+                return self._json_response(False, "Client et numéro de facture requis", status=400)
 
-            if not partner_supplier:
-                return self._json_response(False, f"Fournisseur '{supplier}' non trouvé", status=400)
-
+            # Recherche partenaire client
+            partner_client = request.env["res.partner"].sudo().search(
+                [("name", "ilike", client)], limit=1
+            )
             if not partner_client:
                 return self._json_response(False, f"Client '{client}' non trouvé", status=400)
 
+            # Recherche partenaire fournisseur (OPTIONNEL)
+            partner_supplier = None
+            if supplier:
+                partner_supplier = request.env["res.partner"].sudo().search(
+                    [("name", "ilike", supplier)], limit=1
+                )
+
             # Création de la facture
             move_vals = {
-                "move_type": "out_invoice",  # Facture sortante
+                "move_type": "out_invoice",
                 "partner_id": partner_client.id,
                 "invoice_date": invoice_date,
-                "invoice_user_id": request.env.user.id,  # Utilisateur qui crée la facture
                 "ref": reference,
-                "invoice_line_ids": [(0, 0, {
-                    "name": f"Facture {invoice_number}",
-                    "quantity": 1,
-                    "price_unit": float(total_without_tax),
-                    "account_id": request.env["account.account"].search([("name", "=", "Sales")], limit=1).id,
-                    # Compte de vente générique
-                })],
+                "invoice_line_ids": [
+                    (0, 0, {
+                        "name": f"Facture {invoice_number}",
+                        "quantity": 1,
+                        "price_unit": total_without_tax,
+                    })
+                ],
             }
 
-            # Si une TVA est mentionnée
-            if tva:
-                tax = request.env["account.tax"].sudo().search([("amount", "=", float(tva))], limit=1)
+            # Ajout TVA
+            if tva > 0:
+                tax = request.env["account.tax"].sudo().search(
+                    [("amount", "=", tva)], limit=1
+                )
                 if tax:
                     move_vals["invoice_line_ids"][0][2]["tax_ids"] = [(6, 0, [tax.id])]
 
-            # Création de l'enregistrement de facture dans Odoo
+            # Création dans Odoo
             move = request.env["account.move"].sudo().create(move_vals)
 
-            # Retour avec les informations de la facture créée
-            return self._json_response(True, "Facture créée avec succès", data={"id": move.id, "name": move.name},
-                                       status=201)
+            return self._json_response(
+                True,
+                "Facture créée avec succès",
+                data={"id": move.id, "name": move.name},
+                status=201,
+            )
 
         except Exception as e:
-            return self._json_response(False, f"Erreur lors de la création de la facture : {str(e)}", status=500)
+            return self._json_response(
+                False,
+                f"Erreur lors de la création de la facture : {str(e)}",
+                status=500,
+            )
+
     # --- Création Sales Order ---
     @http.route("/api/so/create", type="json", auth="user", methods=["POST"], csrf=False)
     def create_sale_order(self, **kwargs):
