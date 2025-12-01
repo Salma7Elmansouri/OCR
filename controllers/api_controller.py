@@ -5,6 +5,10 @@ from datetime import date, datetime
 import os
 from openai import OpenAI
 from .config_secret import HUGGINGFACE_API_KEY
+import logging
+
+# Créez un logger pour ce fichier/module
+_logger = logging.getLogger(__name__)
 
 # HuggingFace token
 HF_TOKEN = os.environ.get("HF_TOKEN", HUGGINGFACE_API_KEY)
@@ -203,41 +207,6 @@ Texte :
             return _json_response(False, f"Erreur: {e}", 500)
 
     # ========================================================
-    #               SALES ORDER CREATE
-    # ========================================================
-    @http.route("/api/so/create", type="json", auth="user", methods=["POST"], csrf=False)
-    def create_sale_order(self):
-        data = request.httprequest.get_json()
-        try:
-            partner_id = data.get("partner_id")
-            lines = data.get("lines", [])
-
-            if not partner_id:
-                return _json_response(False, "partner_id requis", 400)
-            if not lines:
-                return _json_response(False, "Lignes requises", 400)
-
-            order_lines = [
-                (0, 0, {
-                    "name": l.get("name", "Line"),
-                    "product_id": l["product_id"],
-                    "product_uom_qty": l.get("quantity", 1),
-                    "price_unit": l.get("price_unit", 0.0),
-                })
-                for l in lines
-            ]
-
-            order = request.env["sale.order"].sudo().create({
-                "partner_id": partner_id,
-                "order_line": order_lines,
-            })
-
-            return _json_response(True, "SO créé", {"id": order.id, "name": order.name}, 201)
-
-        except Exception as e:
-            return _json_response(False, str(e), 500)
-
-    # ========================================================
     #         AI EXTRACT — PURCHASE ORDER (PO)
     # ========================================================
     @http.route("/api/po/ai_extract", type="http", auth="public", methods=["POST"], csrf=False)
@@ -392,3 +361,141 @@ Texte :
 
         except Exception as e:
             return _json_response(False, f"Erreur création PO : {str(e)}", 500)
+# -------------------------
+#   AI EXTRACT POUR SALES ORDER
+# -------------------------
+    @http.route("/api/so/ai_extract", type="http", auth="public", methods=["POST"], csrf=False)
+    def ai_extract_so(self):
+
+        raw = request.httprequest.data.decode("utf-8").strip()
+
+        try:
+            text = json.loads(raw).get("text", "")
+        except:
+            text = raw
+
+        if not text:
+            return _json_response(False, "Aucun texte fourni", 400)
+
+        prompt = f"""
+        Tu extraits un BON DE VENTE (Sales Order). Renvoie UNIQUEMENT ce JSON :
+
+        {{
+          "so_number": "",
+          "so_date": "",
+          "expected_date": "",
+          "reference_customer": "",
+          "payment_terms": "",
+          "customer": {{
+            "name": "",
+            "street": "",
+            "city": "",
+            "country": "",
+            "phone": ""
+          }},
+          "company": {{
+            "name": "",
+            "street": "",
+            "city": "",
+            "country": "",
+            "phone": ""
+          }},
+          "lines": [
+            {{
+              "name": "",
+              "expected_date": "",
+              "quantity": "",
+              "unit_price": "",
+              "tax_rate": ""
+            }}
+          ],
+          "totals": {{
+            "untaxed": "",
+            "taxes": "",
+            "total": ""
+          }}
+        }}
+
+        Texte :
+        \"\"\"{text}\"\"\"
+        """
+
+        response = client.chat.completions.create(
+            model="moonshotai/Kimi-K2-Instruct-0905",
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        raw = response.choices[0].message.content.strip()
+
+        # 🔥 Nettoyage des ```json
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            raw = raw.replace("json", "").strip()
+
+        try:
+            data = json.loads(raw)
+        except Exception as e:
+            return _json_response(False, f"Erreur JSON : {e}", {"raw": raw}, 500)
+
+        return _json_response(True, "Extraction SO réussie", data=data)
+    # -------------------------
+#   CREATE SALES ORDER
+# -------------------------
+    @http.route("/api/so/create", type="http", auth="user", methods=["POST"], csrf=False)
+    def create_sales_order(self):
+        try:
+            # Récupérer les données envoyées
+            data = json.loads(request.httprequest.data.decode("utf-8"))
+
+            # Chercher le partenaire en fonction du nom (ou de l'email ou d'autres critères uniques)
+            partner_name = data.get("customer", {}).get("name")
+            partner = request.env['res.partner'].sudo().search([('name', '=', partner_name)], limit=1)
+
+            # Si le client n'existe pas, retourner une erreur
+            if not partner:
+                return _json_response(False, "Client non trouvé", 400)
+
+            # Récupérer les lignes de commande
+            lines = data.get("lines", [])
+            if not lines:
+                return _json_response(False, "Lignes requises", 400)
+
+            # Construction des lignes de commande
+            order_lines = []
+            for l in lines:
+                # Chercher ou créer un produit
+                product = request.env["product.product"].sudo().search([("name", "ilike", l["name"])], limit=1)
+                if not product:
+                    # Créer un produit si nécessaire
+                    product = request.env["product.product"].sudo().create({
+                        "name": l["name"],
+                        "type": "service",
+                    })
+
+                # Ajouter la ligne de commande
+                order_lines.append((0, 0, {
+                    "name": product.name,
+                    "product_id": product.id,
+                    "product_uom_qty": l.get("quantity", 1),
+                    "price_unit": l.get("unit_price", 0.0),
+                }))
+
+            # Créer la commande de vente dans Odoo
+            order_vals = {
+                "partner_id": partner.id,  # Utiliser l'ID du client trouvé
+                "date_order": data.get("so_date", str(date.today())),
+                "order_line": order_lines,
+                "client_order_ref": data.get("reference_customer", ""),
+            }
+
+            order = request.env["sale.order"].sudo().create(order_vals)
+
+            # Retourner la réponse JSON
+            return _json_response(True, "SO créé", {"id": order.id, "name": order.name})
+
+        except Exception as e:
+            return _json_response(False, f"Erreur: {str(e)}", 500)
+
+
+
+
