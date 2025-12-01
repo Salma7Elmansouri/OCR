@@ -1,4 +1,4 @@
-const ODOO_URL = "http://192.168.1.31:8069"; // URL de votre serveur Odoo
+const ODOO_URL = "http://192.168.1.195:8069"; // URL de votre serveur Odoo
 const DB = "db"; // Nom de la base de données Odoo
 
 async function jsonRpc(path, params) {

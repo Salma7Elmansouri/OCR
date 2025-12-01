@@ -204,7 +204,7 @@ export default function InvoicePreview({ route, navigation }) {
 
             console.log("Payload envoyé à Odoo:", JSON.stringify(payload, null, 2));
 
-            const res = await fetch("http://192.168.1.31:8069/api/invoice/create", {
+            const res = await fetch("http://192.168.1.195:8069/api/invoice/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),

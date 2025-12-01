@@ -74,6 +74,8 @@ export default function DocumentScanner() {
             });
 
             const result = await res.json();
+            console.log("OCR API Result: ", JSON.stringify(result, null, 2));
+
             const text = result?.ParsedResults?.[0]?.ParsedText;
 
             if (!text) {
@@ -87,12 +89,12 @@ export default function DocumentScanner() {
             if (mode === "so") endpoint = "/api/so/ai_extract";
             console.log("TEXT OCR =====>\n", text);
 
-            const backendRes = await fetch(`http://192.168.1.31:8069${endpoint}`, {
+            const backendRes = await fetch(`http://192.168.1.195:8069${endpoint}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text }),
             });
-
+            console.log("Backend Response: ", backendRes);
             const data = await backendRes.json();
             console.log("AI RESPONSE RAW =====>", JSON.stringify(data, null, 2));
 
@@ -107,7 +109,7 @@ export default function DocumentScanner() {
             } else if (mode === "po") {
                 navigation.navigate("PurchaseOrder", { data: data.data });
             } else if (mode === "so") {
-                navigation.navigate("SaleOrder", { data: data.data });
+                navigation.navigate("SalesOrder", { data: data.data });
             }
 
         } catch (err) {

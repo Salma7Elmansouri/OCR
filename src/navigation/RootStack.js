@@ -6,6 +6,7 @@ import MainScreen from "../screens/MainScreen";
 import OcrScreen from "../screens/OcrScreen";
 import InvoicePreview from "../screens/InvoicePreview";
 import PurchaseOrderPreview from "../screens/PurchaseOrderPreview";
+import SalesOrderPreview from "../screens/SalesOrderPreview";
 
 
 
@@ -20,6 +21,7 @@ export function RootStack() {
             <Stack.Screen name="Ocr" component={OcrScreen}/>
             <Stack.Screen name="InvoicePreview" component={InvoicePreview}/>
             <Stack.Screen name="PurchaseOrder" component={PurchaseOrderPreview}/>
+            <Stack.Screen name="SalesOrder" component={SalesOrderPreview}/>
 
         </Stack.Navigator>
     );
