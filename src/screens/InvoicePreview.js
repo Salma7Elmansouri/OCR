@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, {useState, useMemo, useEffect} from "react";
 import {
     View,
     Text,
@@ -68,7 +68,7 @@ const computeTotals = (lines) => {
 };
 
 export default function InvoicePreview({ route, navigation }) {
-    const { data } = route.params || {};
+    const { data,ip } = route.params || {};
     console.log("Données reçues :", data);
 
     if (!data) {
@@ -204,7 +204,7 @@ export default function InvoicePreview({ route, navigation }) {
 
             console.log("Payload envoyé à Odoo:", JSON.stringify(payload, null, 2));
 
-            const res = await fetch("http://192.168.1.195:8069/api/invoice/create", {
+            const res = await fetch(`http://${ip}:8069/api/invoice/create`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
@@ -218,7 +218,8 @@ export default function InvoicePreview({ route, navigation }) {
 
                 if (res.ok && result.success) {
                     Alert.alert("Succès", `Facture créée: ${result.data.name}`);
-                    navigation.goBack();
+                    navigation.navigate("Main",{ip:ip})
+
                 } else {
                     const errorMessage = result.message || "Erreur lors de la création de la facture";
                     Alert.alert("Erreur", errorMessage);
@@ -525,7 +526,9 @@ const styles = StyleSheet.create({
         fontSize: 22,
         fontWeight: "700",
         color: TEXT_PRIMARY,
-        marginBottom: 16,
+        marginBottom: 20,
+        marginTop:40,
+        alignItems: "center",
     },
     card: {
         backgroundColor: SURFACE,

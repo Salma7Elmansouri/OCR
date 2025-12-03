@@ -9,7 +9,7 @@ const SUB = "#6A6A6A";
 const BORDER = "#E5E5E5";
 
 export default function SalesOrderPreview({ route, navigation }) {
-    const { data } = route.params || {};
+    const { data,ip } = route.params || {};
 
     if (!data) {
         return <Text>Aucune donnée SO reçue</Text>;
@@ -109,7 +109,7 @@ export default function SalesOrderPreview({ route, navigation }) {
 
             console.log("📦 Payload envoyé SO:", JSON.stringify(payload, null, 2));
 
-            const res = await fetch("http://192.168.1.195:8069/api/so/create", {
+            const res = await fetch(`http://${ip}:8069/api/so/create`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
@@ -136,7 +136,8 @@ export default function SalesOrderPreview({ route, navigation }) {
 
             if (json.success) {
                 Alert.alert("Succès", "Commande de vente créée !");
-                navigation.goBack();
+                navigation.navigate("Main",{ip:ip})
+
             } else {
                 console.error("Erreur dans la création de la SO:", json.message);
                 Alert.alert("Erreur", json.message);
@@ -232,17 +233,72 @@ export default function SalesOrderPreview({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-    container: { padding: 16, backgroundColor: BG },
-    title: { fontSize: 22, fontWeight: "700", color: TEXT, marginBottom: 12 },
-    section: { fontSize: 18, fontWeight: "700", marginTop: 20, color: TEXT },
-    card: { backgroundColor: CARD, padding: 14, borderRadius: 12, marginTop: 10 },
-    input: { backgroundColor: "#FAFAFA", padding: 10, borderRadius: 8, marginTop: 10 },
-    rowBetween: { flexDirection: "row", justifyContent: "space-between" },
-    add: { color: PRIMARY, fontWeight: "700", fontSize: 16 },
+    container: { flex: 1, padding: 16, backgroundColor: "#F5F5F5" },
+
+    // Titres
+    title: { fontSize: 24, fontWeight: "700", color: "#1A1A1A", marginTop:30 ,marginBottom: 5 },
+    section: { fontSize: 18, fontWeight: "700", marginTop: 24, marginBottom: 8, color: "#1A1A1A" },
+
+    // Cartes
+    card: {
+        backgroundColor: "#FFF",
+        padding: 16,
+        borderRadius: 12,
+        marginTop: 10,
+        borderWidth: 1,
+        borderColor: "#E5E5E5",
+        shadowColor: "#000",
+        shadowOpacity: 0.05,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+        elevation: 2,
+    },
+
+    // Champs
+    input: {
+        backgroundColor: "#FAFAFA",
+        padding: 12,
+        borderRadius: 10,
+        marginTop: 6,
+        borderWidth: 1,
+        borderColor: "#E0E0E0",
+        fontSize: 14,
+        color: "#1A1A1A",
+    },
+
+    // Lignes
+    rowBetween: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    add: { color: "#6200EE", fontWeight: "700", fontSize: 16 },
     deleteBtn: { marginTop: 10, alignItems: "center" },
-    deleteText: { color: "red", fontWeight: "700", fontSize: 16 },
-    totalLabel: { fontSize: 18, fontWeight: "700", color: TEXT },
-    totalValue: { fontSize: 20, fontWeight: "800", color: PRIMARY },
-    btn: { backgroundColor: PRIMARY, padding: 15, borderRadius: 50, alignItems: "center", marginTop: 20 },
+    deleteText: { color: "#FF5252", fontWeight: "700", fontSize: 16 },
+
+    // Totaux
+    totalLabel: { fontSize: 18, fontWeight: "700", color: "#1A1A1A" },
+    totalValue: { fontSize: 20, fontWeight: "800", color: "#6200EE", marginTop: 4 },
+
+    // Boutons
+    btn: {
+        backgroundColor: "#6200EE",
+        paddingVertical: 16,
+        borderRadius: 50,
+        alignItems: "center",
+        marginVertical: 24,
+        shadowColor: "#6200EE",
+        shadowOpacity: 0.2,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 6,
+        elevation: 3,
+    },
     btnText: { color: "#FFF", fontSize: 16, fontWeight: "700" },
+
+    // Labels et champs séparés
+    fieldLabel: { fontSize: 12, color: "#757575", marginBottom: 4, fontWeight: "600" },
+    fieldValue: {
+        backgroundColor: "#F0F0F0",
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 10,
+        fontSize: 14,
+        color: "#1A1A1A",
+    },
 });

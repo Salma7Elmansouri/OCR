@@ -1,9 +1,11 @@
-const ODOO_URL = "http://192.168.1.195:8069"; // URL de votre serveur Odoo
+const ODOO_URL = "http://192.168.1.82:8069"; // Default URL, but we will modify it dynamically based on IP
 const DB = "db"; // Nom de la base de données Odoo
 
-async function jsonRpc(path, params) {
+// Fonction pour faire des requêtes JSON-RPC vers Odoo
+async function jsonRpc(path, params, ip) {
     try {
-        const response = await fetch(`${ODOO_URL}${path}`, {
+        const url = `http://${ip}:8069${path}`; // URL dynamique avec IP
+        const response = await fetch(url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -27,7 +29,7 @@ async function jsonRpc(path, params) {
             throw new Error(data.error.message);
         }
 
-        return data.result;  // Assurez-vous que la réponse renvoie `result`
+        return data.result;
     } catch (error) {
         console.error("Error making request to Odoo:", error);
         throw error;
@@ -35,26 +37,26 @@ async function jsonRpc(path, params) {
 }
 
 // Authentification avec Odoo
-export async function odooLogin(email, password) {
+export async function odooLogin(email, password, ip) {
     try {
-        // Assurez-vous que le paramètre 'db' est correct
         const result = await jsonRpc("/web/session/authenticate", {
             db: DB,
             login: email,
             password: password,
-        });
-        return result;  // Retourner la réponse complète de l'API Odoo
+        }, ip);
+        return result;
     } catch (error) {
         console.error("Odoo login failed:", error);
         throw new Error("Odoo login failed: " + error.message);
     }
 }
 
-export async function odooSearchRead(model, domain = [], fields = []) {
+// Exemple de fonction pour lire un modèle avec des critères
+export async function odooSearchRead(model, domain = [], fields = [], ip) {
     return jsonRpc("/web/dataset/search_read", {
         model,
         domain,
         fields,
         limit: 10,
-    });
+    }, ip);
 }

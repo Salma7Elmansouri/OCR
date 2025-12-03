@@ -45,7 +45,7 @@ const computeTotals = (lines) => {
 /* -------------------------------------------------------------------------- */
 
 export default function PurchaseOrderPreview({ route, navigation }) {
-    const { data } = route.params || {};
+    const { data,ip } = route.params || {};
 
     if (!data) return <Text>Aucune donnée PO reçue</Text>;
 
@@ -134,7 +134,7 @@ export default function PurchaseOrderPreview({ route, navigation }) {
 
             console.log("📦 Payload envoyé PO:", JSON.stringify(payload, null, 2));
 
-            const res = await fetch("http://192.168.1.195:8069/api/po/create", {
+            const res = await fetch(`http://${ip}:8069/api/po/create`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
@@ -147,7 +147,8 @@ export default function PurchaseOrderPreview({ route, navigation }) {
 
             if (json.success) {
                 Alert.alert("Succès", "Purchase Order créé !");
-                navigation.goBack();
+                navigation.navigate("Main",{ip:ip})
+
             } else {
                 Alert.alert("Erreur", json.message);
             }
@@ -301,44 +302,72 @@ export default function PurchaseOrderPreview({ route, navigation }) {
 /* -------------------------------------------------------------------------- */
 
 const styles = StyleSheet.create({
-    container: { padding: 16, backgroundColor: BG },
-    title: { fontSize: 22, fontWeight: "700", color: TEXT, marginBottom: 12 },
-    section: { fontSize: 18, fontWeight: "700", marginTop: 20, color: TEXT },
+    container: { padding: 16, backgroundColor: "#F5F5F5" },
+    title: { fontSize: 24, fontWeight: "700", color: "#1A1A1A", marginTop: 30,marginBottom:10 },
+
+    // Sections
+    section: { fontSize: 18, fontWeight: "700", marginTop: 24, marginBottom: 8, color: "#5900ff" },
     card: {
-        backgroundColor: CARD,
-        padding: 14,
+        backgroundColor: "#FFF",
+        padding: 16,
         borderRadius: 12,
-        marginTop: 10,
+        marginTop: 8,
         borderWidth: 1,
-        borderColor: BORDER,
+        borderColor: "#E5E5E5",
+        shadowColor: "#000",
+        shadowOpacity: 0.05,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+        elevation: 2,
     },
+
+    // Inputs
     input: {
         backgroundColor: "#FAFAFA",
-        borderRadius: 8,
-        padding: 10,
-        marginTop: 10,
+        borderRadius: 10,
+        padding: 12,
+        marginTop: 12,
         borderWidth: 1,
-        borderColor: BORDER,
+        borderColor: "#E0E0E0",
+        fontSize: 14,
+        color: "#333",
     },
-    rowBetween: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-    lineTitle: { fontSize: 16, fontWeight: "700", color: TEXT },
-    add: { color: PRIMARY, fontWeight: "700", fontSize: 16 },
-    delete: { color: "red", fontWeight: "700" },
-    localTotal: {
-        marginTop: 10,
-        fontSize: 16,
-        color: TEXT,
-    },
+
+    // Row helpers
+    rowBetween: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    row: { flexDirection: "row", alignItems: "center" },
+
+    // Line items
+    lineTitle: { fontSize: 16, fontWeight: "700", color: "#1A1A1A" },
+    add: { color: "#6200EE", fontWeight: "700", fontSize: 16 },
+    delete: { color: "#FF5252", fontWeight: "700", fontSize: 14 },
+
+    // Totals
+    localTotal: { marginTop: 12, fontSize: 16, color: "#1A1A1A" },
+
+    // Buttons
     btn: {
-        backgroundColor: PRIMARY,
-        padding: 15,
+        backgroundColor: "#6200EE",
+        paddingVertical: 16,
         borderRadius: 50,
         alignItems: "center",
-        marginVertical: 25,
+        marginVertical: 24,
+        shadowColor: "#6200EE",
+        shadowOpacity: 0.2,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 6,
+        elevation: 3,
     },
     btnText: { color: "#FFF", fontSize: 16, fontWeight: "700" },
+
+    // Vendor / Company / Address fields
+    fieldLabel: { fontSize: 12, color: "#757575", marginBottom: 4, fontWeight: "600" },
+    fieldValue: {
+        backgroundColor: "#F0F0F0",
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 10,
+        fontSize: 14,
+        color: "#1A1A1A",
+    },
 });
