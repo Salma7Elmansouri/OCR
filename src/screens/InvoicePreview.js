@@ -236,7 +236,7 @@ export default function InvoicePreview({ route, navigation }) {
 
     return (
         <ScrollView style={styles.container}>
-            <SafeAreaView style={styles.safeArea}>
+            <View style={styles.safeArea}>
                 <Text style={styles.screenTitle}>Prévisualisation de la facture</Text>
 
                 {/* HEADER FACTURE */}
@@ -508,7 +508,7 @@ export default function InvoicePreview({ route, navigation }) {
                         Créer la facture dans Odoo
                     </Text>
                 </TouchableOpacity>
-            </SafeAreaView>
+            </View>
         </ScrollView>
     );
 }
@@ -517,10 +517,12 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: BG,
+
     },
     safeArea: {
         flex: 1,
         padding: 16,
+
     },
     screenTitle: {
         fontSize: 22,

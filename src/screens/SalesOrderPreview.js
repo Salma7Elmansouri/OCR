@@ -233,7 +233,7 @@ export default function SalesOrderPreview({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 16, backgroundColor: "#F5F5F5" },
+    container: { flex: 1, padding: 16, backgroundColor: "#F5F5F5", marginBottom:30, marginTop:30 },
 
     // Titres
     title: { fontSize: 24, fontWeight: "700", color: "#1A1A1A", marginTop:30 ,marginBottom: 5 },

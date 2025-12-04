@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, Linking } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const PROFILE_BG = "#F9F9F9"; // Arrière-plan du profil
@@ -11,7 +11,7 @@ const BORDER_COLOR = "#E0E0E0";  // Couleur de la bordure
 export default function ProfileScreen({ route, navigation }) {
     const { odooResponse } = route.params;  // Récupérer la réponse Odoo envoyée lors de la connexion
 
-    const { name, username, user_id, partner_display_name, partner_id, company_id, is_admin } = odooResponse;
+    const { name, username, partner_display_name, is_admin, company_id } = odooResponse;
 
     // Fonction de déconnexion (à adapter selon le besoin)
     const handleLogout = () => {
@@ -20,11 +20,26 @@ export default function ProfileScreen({ route, navigation }) {
             {
                 text: "Déconnexion",
                 onPress: () => {
-                    // Ici, vous pouvez effacer les données d'authentification et rediriger l'utilisateur vers l'écran de connexion
+                    // Redirige l'utilisateur vers l'écran de connexion
                     navigation.replace("Login");
                 },
             },
         ]);
+    };
+
+    // Fonction pour afficher les informations de l'application
+    const handleAbout = () => {
+        Alert.alert(
+            "À propos de l'application",
+            "Cette application est sur un plan gratuit. Vous disposez de 300 requêtes AI par mois.\n\nPour plus de requêtes et d'autres fonctionnalités, souscrivez à notre plan payant.",
+            [
+                { text: "Annuler", style: "cancel" },
+                {
+                    text: "Souscrire au plan payant",
+                    onPress: () => Linking.openURL("https://huggingface.co/pricing")  // Lien vers la page de souscription
+                },
+            ]
+        );
     };
 
     return (
@@ -65,14 +80,13 @@ export default function ProfileScreen({ route, navigation }) {
                     </View>
                 </View>
 
-                <View style={styles.detailItem}>
-                    <MaterialCommunityIcons name="home-city" size={28} color={PRIMARY} />
-                    <View style={styles.textContainer}>
-                        <Text style={styles.detailText}>A propos</Text>
-                        <Text style={styles.detailValue}>À implémenter</Text>
-                    </View>
-                </View>
+
             </View>
+
+            {/* Bouton "A propos" */}
+            <TouchableOpacity style={styles.aboutButton} onPress={handleAbout}>
+                <Text style={styles.aboutButtonText}>A propos de l'application</Text>
+            </TouchableOpacity>
 
             {/* Bouton de déconnexion */}
             <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -153,6 +167,23 @@ const styles = StyleSheet.create({
     },
     logoutButtonText: {
         color: "#fff",
+        fontWeight: "700",
+        fontSize: 16,
+    },
+
+    // Bouton A propos
+    aboutButton: {
+        backgroundColor: "#f1f1f1",
+        paddingVertical: 14,
+        paddingHorizontal: 40,
+        borderRadius: 30,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 25,
+        marginBottom: 15,
+    },
+    aboutButtonText: {
+        color: PRIMARY,
         fontWeight: "700",
         fontSize: 16,
     },

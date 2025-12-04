@@ -139,7 +139,7 @@ export default function LoginScreen({ navigation }) {
                     </View>
 
                     <TouchableOpacity style={styles.button} onPress={handleFirebaseLogin}>
-                        <Text style={styles.buttonText}>{loading ? "Logging in..." : "Login with Firebase"}</Text>
+                        <Text style={styles.buttonText}>{loading ? "Logging in..." : "Login "}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={() => handleOpenLink()}>
